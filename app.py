@@ -1,17 +1,29 @@
-import cv2
+from flask import Flask, request, render_template, redirect, url_for, flash, session
 import os
-from flask import Flask, request, render_template
-from datetime import date, datetime
+import cv2
 import numpy as np
-from sklearn.neighbors import KNeighborsClassifier
+from datetime import date, datetime
 import pandas as pd
 import joblib
+from sklearn.neighbors import KNeighborsClassifier
 from gtts import gTTS
 from io import BytesIO
 import pygame
+import smtplib
+from email.mime.text import MIMEText
+from cryptography.fernet import Fernet
+import logging
 
 #### Defining Flask App
 app = Flask(__name__)
+app.secret_key = os.urandom(24)
+
+#### Logging Setup
+logging.basicConfig(filename='app.log', level=logging.INFO)
+
+#### Initialize encryption (optional)
+key = Fernet.generate_key()
+cipher_suite = Fernet(key)
 
 #### Saving Date today in 2 different formats
 datetoday = date.today().strftime("%m_%d_%y")
@@ -28,14 +40,13 @@ if not os.path.isdir('static'):
 if not os.path.isdir('static/faces'):
     os.makedirs('static/faces')
 if f'Attendance-{datetoday}.csv' not in os.listdir('Attendance'):
-    with open(f'Attendance/Attendance-{datetoday}.csv','w') as f:
+    with open(f'Attendance/Attendance-{datetoday}.csv', 'w') as f:
         f.write('Name,Roll,Time')
 
-#### get a number of total registered users
+#### Utility Functions
 def totalreg():
     return len(os.listdir('static/faces'))
 
-#### extract the face from an image
 def extract_faces(img):
     try:
         if img.shape != (0, 0, 0):
@@ -44,15 +55,14 @@ def extract_faces(img):
             return face_points
         else:
             return []
-    except:
+    except Exception as e:
+        logging.error(f"Error in extract_faces: {e}")
         return []
 
-#### Identify face using ML model
 def identify_face(facearray):
     model = joblib.load('static/face_recognition_model.pkl')
     return model.predict(facearray)
 
-#### A function which trains the model on all the faces available in faces folder
 def train_model():
     faces = []
     labels = []
@@ -68,7 +78,6 @@ def train_model():
     knn.fit(faces, labels)
     joblib.dump(knn, 'static/face_recognition_model.pkl')
 
-#### Extract info from today's attendance file in attendance folder
 def extract_attendance():
     df = pd.read_csv(f'Attendance/Attendance-{datetoday}.csv')
     names = df['Name']
@@ -77,7 +86,6 @@ def extract_attendance():
     l = len(df)
     return names, rolls, times, l
 
-#### Add Attendance of a specific user
 def add_attendance(name):
     username = name.split('_')[0]
     userid = name.split('_')[1]
@@ -90,7 +98,6 @@ def add_attendance(name):
         return True
     return False
 
-#### Function to play voice message
 def play_voice_message(message):
     tts = gTTS(text=message, lang='en')
     fp = BytesIO()
@@ -102,6 +109,20 @@ def play_voice_message(message):
     pygame.mixer.music.play()
     while pygame.mixer.music.get_busy():
         pygame.time.Clock().tick(10)
+
+def send_email(subject, body, to_email):
+    try:
+        msg = MIMEText(body)
+        msg['Subject'] = "Opening the Attendance System"
+        msg['From'] = 'sabarish.it22@bitsathy.ac.in'
+        msg['To'] = 'ravik60656@gmail.com'
+
+        with smtplib.SMTP('smtp.example.com', 587) as server:  # Update SMTP settings
+            server.starttls()
+            server.login('your_email@example.com', 'your_password')  # Update this
+            server.send_message(msg)
+    except Exception as e:
+        logging.error(f"Error in sending email: {e}")
 
 def getallusers():
     userlist = os.listdir('static/faces')
@@ -124,17 +145,20 @@ def deletefolder(duser):
 
     os.rmdir(duser)
 
-################## ROUTING FUNCTIONS #########################
-
-#### Our main page
+#### Route Functions
 @app.route('/')
 def home():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+    
     names, rolls, times, l = extract_attendance()    
     return render_template('home.html', names=names, rolls=rolls, times=times, l=l, totalreg=totalreg(), datetoday2=datetoday2)  
 
-#### This function will run when we click on Take Attendance Button
 @app.route('/start', methods=['GET'])
 def start():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+    
     if 'face_recognition_model.pkl' not in os.listdir('static'):
         return render_template('home.html', totalreg=totalreg(), datetoday2=datetoday2, mess='There is no trained model in the static folder. Please add a new face to continue.')
 
@@ -148,8 +172,8 @@ def start():
             face = cv2.resize(frame[y:y+h, x:x+w], (50, 50))
             identified_person = identify_face(face.reshape(1, -1))[0]
             if add_attendance(identified_person):
-                # Play voice message
                 play_voice_message('Attendance marked successfully.')
+                send_email('Attendance Update', f'User {identified_person} marked present at {datetime.now()}', 'recipient@example.com')
             cv2.putText(frame, f'{identified_person}', (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 20), 2, cv2.LINE_AA)
         cv2.imshow('Attendance', frame)
         if cv2.waitKey(1) == 27:
@@ -159,39 +183,87 @@ def start():
     names, rolls, times, l = extract_attendance()    
     return render_template('home.html', names=names, rolls=rolls, times=times, l=l, totalreg=totalreg(), datetoday2=datetoday2) 
 
-#### This function will run when we add a new user
 @app.route('/add', methods=['GET', 'POST'])
 def add():
-    newusername = request.form['newusername']
-    newuserid = request.form['newuserid']
-    userimagefolder = 'static/faces/'+newusername+'_'+str(newuserid)
-    if not os.path.isdir(userimagefolder):
-        os.makedirs(userimagefolder)
-    i, j = 0, 0
-    cap = cv2.VideoCapture(0)
-    while 1:
-        _, frame = cap.read()
-        faces = extract_faces(frame)
-        for (x, y, w, h) in faces:
-            cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 20), 2)
-            cv2.putText(frame, f'Images Captured: {i}/50', (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 20), 2, cv2.LINE_AA)
-            if j % 10 == 0:
-                name = newusername+'_'+str(i)+'.jpg'
-                cv2.imwrite(userimagefolder+'/'+name, frame[y:y+h, x:x+w])
-                i += 1
-            j += 1
-        if j == 500:
-            break
-        cv2.imshow('Adding new User', frame)
-        if cv2.waitKey(1) == 27:
-            break
-    cap.release()
-    cv2.destroyAllWindows()
-    print('Training Model')
-    train_model()
-    names, rolls, times, l = extract_attendance()    
-    return render_template('home.html', names=names, rolls=rolls, times=times, l=l, totalreg=totalreg(), datetoday2=datetoday2) 
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        newusername = request.form['newusername']
+        newuserid = request.form['newuserid']
+        userimagefolder = 'static/faces/'+newusername+'_'+str(newuserid)
+        if not os.path.isdir(userimagefolder):
+            os.makedirs(userimagefolder)
+        i, j = 0, 0
+        cap = cv2.VideoCapture(0)
+        while 1:
+            _, frame = cap.read()
+            faces = extract_faces(frame)
+            for (x, y, w, h) in faces:
+                cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 20), 2)
+                cv2.putText(frame, f'Images Captured: {i}/50', (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 20), 2, cv2.LINE_AA)
+                if j % 10 == 0:
+                    name = newusername+'_'+str(i)+'.jpg'
+                    cv2.imwrite(userimagefolder+'/'+name, frame[y:y+h, x:x+w])
+                    i += 1
+                j += 1
+            if j == 500:
+                break
+            cv2.imshow('Adding new User', frame)
+            if cv2.waitKey(1) == 27:
+                break
+        cap.release()
+        cv2.destroyAllWindows()
+        logging.info('Training Model')
+        train_model()
+        names, rolls, times, l = extract_attendance()    
+        return render_template('home.html', names=names, rolls=rolls, times=times, l=l, totalreg=totalreg(), datetoday2=datetoday2) 
 
-#### Our main function which runs the Flask App
+@app.route('/edit_user/<username>', methods=['GET', 'POST'])
+def edit_user(username):
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        newname = request.form['newname']
+        newroll = request.form['newroll']
+        old_path = f'static/faces/{username}'
+        new_path = f'static/faces/{newname}_{newroll}'
+        os.rename(old_path, new_path)
+        return redirect(url_for('home'))
+    return render_template('edit_user.html', username=username)
+
+@app.route('/delete_user/<username>', methods=['POST'])
+def delete_user(username):
+    try:
+        user_folder = f'static/faces/{username}'
+        if os.path.isdir(user_folder):
+            deletefolder(user_folder)
+            train_model()
+            flash(f'User {username} deleted successfully.', 'success')
+        else:
+            flash(f'User {username} not found.', 'error')
+    except Exception as e:
+        logging.error(f"Error deleting user {username}: {e}")
+        flash(f'Error deleting user {username}.', 'error')
+    return redirect(url_for('home'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+        if username == 'bitsathy' and password == '1234':  
+            session['logged_in'] = True
+            return redirect(url_for('home'))
+        else:
+            flash('Invalid credentials', 'error')
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
+
 if __name__ == '__main__':
     app.run(debug=True)
