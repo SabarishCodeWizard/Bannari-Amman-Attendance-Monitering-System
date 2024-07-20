@@ -8,7 +8,7 @@ This project is an attendance monitoring system that uses facial recognition tec
 
 ## Demo
 
-[Watch the demo video](https://drive.google.com/file/d/1lG4r7-J_E2TKXDepyfJ0CKllC0nLRndd/view?usp=sharing)
+[Watch the demo video](https://drive.google.com/file/d/1Gqt7hocnJyS9D3U5s7ufA17NXbxndkKI/view?usp=sharing)
 
 
 ## Features
