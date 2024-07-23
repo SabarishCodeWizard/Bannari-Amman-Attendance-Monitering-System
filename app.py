@@ -3,7 +3,6 @@ import os
 import cv2
 import numpy as np
 from datetime import date, datetime
-import pandas as pd
 import joblib
 from sklearn.neighbors import KNeighborsClassifier
 from gtts import gTTS
@@ -13,6 +12,8 @@ import smtplib
 from email.mime.text import MIMEText
 from cryptography.fernet import Fernet
 import logging
+from pymongo import MongoClient
+import base64
 
 #### Defining Flask App
 app = Flask(__name__)
@@ -25,6 +26,12 @@ logging.basicConfig(filename='app.log', level=logging.INFO)
 key = Fernet.generate_key()
 cipher_suite = Fernet(key)
 
+#### MongoDB Setup
+client = MongoClient('mongodb://localhost:27017/')
+db = client.attendance_db
+users_collection = db.users
+attendance_collection = db.attendance
+
 #### Saving Date today in 2 different formats
 datetoday = date.today().strftime("%m_%d_%y")
 datetoday2 = date.today().strftime("%d-%B-%Y")
@@ -32,20 +39,9 @@ datetoday2 = date.today().strftime("%d-%B-%Y")
 #### Initializing VideoCapture object to access WebCam
 face_detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-#### If these directories don't exist, create them
-if not os.path.isdir('Attendance'):
-    os.makedirs('Attendance')
-if not os.path.isdir('static'):
-    os.makedirs('static')
-if not os.path.isdir('static/faces'):
-    os.makedirs('static/faces')
-if f'Attendance-{datetoday}.csv' not in os.listdir('Attendance'):
-    with open(f'Attendance/Attendance-{datetoday}.csv', 'w') as f:
-        f.write('Name,Roll,Time')
-
 #### Utility Functions
 def totalreg():
-    return len(os.listdir('static/faces'))
+    return users_collection.count_documents({})
 
 def extract_faces(img):
     try:
@@ -66,35 +62,36 @@ def identify_face(facearray):
 def train_model():
     faces = []
     labels = []
-    userlist = os.listdir('static/faces')
+    userlist = users_collection.find()
     for user in userlist:
-        for imgname in os.listdir(f'static/faces/{user}'):
-            img = cv2.imread(f'static/faces/{user}/{imgname}')
+        for face_data in user['faces']:
+            img_data = base64.b64decode(face_data)
+            img_array = np.frombuffer(img_data, np.uint8)
+            img = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
             resized_face = cv2.resize(img, (50, 50))
             faces.append(resized_face.ravel())
-            labels.append(user)
+            labels.append(f"{user['name']}_{user['id']}")
     faces = np.array(faces)
     knn = KNeighborsClassifier(n_neighbors=5)
     knn.fit(faces, labels)
     joblib.dump(knn, 'static/face_recognition_model.pkl')
 
 def extract_attendance():
-    df = pd.read_csv(f'Attendance/Attendance-{datetoday}.csv')
-    names = df['Name']
-    rolls = df['Roll']
-    times = df['Time']
-    l = len(df)
+    attendance_records = attendance_collection.find({"date": datetoday})
+    names, rolls, times = [], [], []
+    for record in attendance_records:
+        names.append(record['name'])
+        rolls.append(record['roll'])
+        times.append(record['time'])
+    l = len(names)
     return names, rolls, times, l
 
 def add_attendance(name):
-    username = name.split('_')[0]
-    userid = name.split('_')[1]
+    username, userid = name.split('_')
     current_time = datetime.now().strftime("%H:%M:%S")
     
-    df = pd.read_csv(f'Attendance/Attendance-{datetoday}.csv')
-    if int(userid) not in list(df['Roll']):
-        with open(f'Attendance/Attendance-{datetoday}.csv', 'a') as f:
-            f.write(f'\n{username},{userid},{current_time}')
+    if not attendance_collection.find_one({"roll": int(userid), "date": datetoday}):
+        attendance_collection.insert_one({"name": username, "roll": int(userid), "time": current_time, "date": datetoday})
         return True
     return False
 
@@ -113,9 +110,9 @@ def play_voice_message(message):
 def send_email(subject, body, to_email):
     try:
         msg = MIMEText(body)
-        msg['Subject'] = "Opening the Attendance System"
+        msg['Subject'] = subject
         msg['From'] = 'sabarish.it22@bitsathy.ac.in'
-        msg['To'] = 'ravik60656@gmail.com'
+        msg['To'] = to_email
 
         with smtplib.SMTP('smtp.example.com', 587) as server:  # Update SMTP settings
             server.starttls()
@@ -125,25 +122,13 @@ def send_email(subject, body, to_email):
         logging.error(f"Error in sending email: {e}")
 
 def getallusers():
-    userlist = os.listdir('static/faces')
-    names = []
-    rolls = []
-    l = len(userlist)
-
-    for i in userlist:
-        name, roll = i.split('_')
-        names.append(name)
-        rolls.append(roll)
-    
+    userlist = users_collection.find()
+    names, rolls = [], []
+    for user in userlist:
+        names.append(user['name'])
+        rolls.append(user['id'])
+    l = len(names)
     return userlist, names, rolls, l
-
-def deletefolder(duser):
-    pics = os.listdir(duser)
-    
-    for i in pics:
-        os.remove(duser+'/'+i)
-
-    os.rmdir(duser)
 
 #### Route Functions
 @app.route('/')
@@ -191,33 +176,32 @@ def add():
     if request.method == 'POST':
         newusername = request.form['newusername']
         newuserid = request.form['newuserid']
-        userimagefolder = 'static/faces/'+newusername+'_'+str(newuserid)
-        if not os.path.isdir(userimagefolder):
-            os.makedirs(userimagefolder)
+        user_faces = []
         i, j = 0, 0
         cap = cv2.VideoCapture(0)
         while 1:
             _, frame = cap.read()
             faces = extract_faces(frame)
             for (x, y, w, h) in faces:
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 20), 2)
-                cv2.putText(frame, f'Images Captured: {i}/50', (30, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 20), 2, cv2.LINE_AA)
+                cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
                 if j % 10 == 0:
-                    name = newusername+'_'+str(i)+'.jpg'
-                    cv2.imwrite(userimagefolder+'/'+name, frame[y:y+h, x:x+w])
+                    face = frame[y:y+h, x:x+w]
+                    resized_face = cv2.resize(face, (50, 50))
+                    encoded_face = base64.b64encode(cv2.imencode('.jpg', resized_face)[1]).decode()
+                    user_faces.append(encoded_face)
                     i += 1
                 j += 1
-            if j == 500:
-                break
             cv2.imshow('Adding new User', frame)
-            if cv2.waitKey(1) == 27:
+            if cv2.waitKey(1) == 27 or i == 20:
                 break
         cap.release()
         cv2.destroyAllWindows()
-        logging.info('Training Model')
+        users_collection.insert_one({"name": newusername, "id": int(newuserid), "faces": user_faces})
+        
+        logging.info('Adding User and Training Model')
         train_model()
-        names, rolls, times, l = extract_attendance()    
-        return render_template('home.html', names=names, rolls=rolls, times=times, l=l, totalreg=totalreg(), datetoday2=datetoday2) 
+        return redirect(url_for('home'))
+    return render_template('add.html')
 
 @app.route('/edit_user/<username>', methods=['GET', 'POST'])
 def edit_user(username):
@@ -225,39 +209,44 @@ def edit_user(username):
         return redirect(url_for('login'))
     
     if request.method == 'POST':
-        newname = request.form['newname']
-        newroll = request.form['newroll']
-        old_path = f'static/faces/{username}'
-        new_path = f'static/faces/{newname}_{newroll}'
-        os.rename(old_path, new_path)
+        new_username = request.form['new_username']
+        new_userid = request.form['new_userid']
+        
+        users_collection.update_one({'name': username}, {'$set': {'name': new_username, 'id': int(new_userid)}})
+        
+        logging.info('Updating User and Training Model')
+        train_model()
+        
         return redirect(url_for('home'))
-    return render_template('edit_user.html', username=username)
+    
+    user = users_collection.find_one({'name': username.split('_')[0], 'id': int(username.split('_')[1])})
+    if not user:
+        return 'User not found!', 404
+    
+    return render_template('edit_user.html', user=user)
 
 @app.route('/delete_user/<username>', methods=['POST'])
 def delete_user(username):
-    try:
-        user_folder = f'static/faces/{username}'
-        if os.path.isdir(user_folder):
-            deletefolder(user_folder)
-            train_model()
-            flash(f'User {username} deleted successfully.', 'success')
-        else:
-            flash(f'User {username} not found.', 'error')
-    except Exception as e:
-        logging.error(f"Error deleting user {username}: {e}")
-        flash(f'Error deleting user {username}.', 'error')
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+    
+    users_collection.delete_one({'name': username.split('_')[0], 'id': int(username.split('_')[1])})
+    logging.info('Deleting User and Training Model')
+    train_model()
     return redirect(url_for('home'))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username == 'bitsathy' and password == '1234':  
+        if username == 'admin' and password == 'admin123':
             session['logged_in'] = True
             return redirect(url_for('home'))
         else:
-            flash('Invalid credentials', 'error')
+            flash('Invalid username or password')
+            return redirect(url_for('login'))
     return render_template('login.html')
 
 @app.route('/logout')
