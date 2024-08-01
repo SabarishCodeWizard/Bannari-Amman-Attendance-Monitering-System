@@ -247,7 +247,7 @@ def login():
         else:
             flash('Invalid username or password')
             return redirect(url_for('login'))
-    return render_template('login.html')
+    return render_template('login.html')    
 
 @app.route('/logout')
 def logout():

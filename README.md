@@ -5,11 +5,9 @@
 ## Overview
 This project is an attendance monitoring system that uses facial recognition technology to mark and track attendance. It utilizes OpenCV for face detection, a machine learning model for face recognition, and Flask for the web interface.
 
-
 ## Demo
 
 [Watch the demo video](https://drive.google.com/file/d/1Gqt7hocnJyS9D3U5s7ufA17NXbxndkKI/view?usp=sharing)
-
 
 ## Features
 - Real-time facial recognition
@@ -28,6 +26,9 @@ This project is an attendance monitoring system that uses facial recognition tec
 - gTTS
 - pygame
 - numpy
+- smtplib
+- cryptography
+- pymongo
 
 ## Installation
 
@@ -76,7 +77,6 @@ This project is an attendance monitoring system that uses facial recognition tec
 - `haarcascade_frontalface_default.xml`: Haar cascade file for face detection.
 - `static/`: Directory for static files, including user images and the machine learning model.
 - `templates/`: Directory for HTML templates.
-- `Attendance/`: Directory for attendance CSV files.
 - `requirements.txt`: List of dependencies.
 
 ## Functions
@@ -94,7 +94,7 @@ Identifies a face using the pre-trained machine learning model.
 Trains the face recognition model on available user images.
 
 ### `extract_attendance()`
-Extracts attendance data from today's CSV file.
+Extracts attendance data from today's records.
 
 ### `add_attendance(name)`
 Adds attendance for a recognized user.
@@ -102,10 +102,17 @@ Adds attendance for a recognized user.
 ### `play_voice_message(message)`
 Plays a voice message using gTTS and pygame.
 
+### `send_email(subject, body, to_email)`
+Sends an email with the specified subject and body to the specified email address.
+
+### `getallusers()`
+Retrieves all registered users.
+
 ## Configuration
 
 - **Database Configuration**: Adjust database paths as needed in the code.
 - **Voice Feedback**: Modify the `play_voice_message` function for different messages or languages.
+- **Email Configuration**: Update the `send_email` function with appropriate SMTP settings and login credentials.
 
 ## Troubleshooting
 
@@ -121,4 +128,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [scikit-learn](https://scikit-learn.org/)
 - [gTTS](https://pypi.org/project/gTTS/)
 - [pygame](https://www.pygame.org/)
+- [MongoDB](https://www.mongodb.com/)
 
