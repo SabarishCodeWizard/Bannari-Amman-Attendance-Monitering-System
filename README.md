@@ -16,11 +16,15 @@ This project is an attendance monitoring system that uses facial recognition tec
 - Generate and view attendance logs
 - Secure and scalable design
 
+![alt text](<Screenshot 2024-08-02 002744.png>)
 
+![alt text](image-4.png)
 
 ![alt text](image.png)
 
 ![![alt text](image-2.png)](image-1.png)
+
+
 ![c](image-3.png)
 ## Requirements
 - Python 3.x
