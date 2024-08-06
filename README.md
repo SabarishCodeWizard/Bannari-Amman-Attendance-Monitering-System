@@ -129,7 +129,6 @@ Retrieves all registered users.
 - **Model Not Found**: Ensure `face_recognition_model.pkl` exists in the `static` directory.
 - **No Faces Detected**: Check the quality of input images and lighting conditions.
 
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 
 
