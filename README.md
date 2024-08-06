@@ -132,11 +132,4 @@ Retrieves all registered users.
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Acknowledgments
-- [OpenCV](https://opencv.org/)
-- [Flask](https://flask.palletsprojects.com/)
-- [scikit-learn](https://scikit-learn.org/)
-- [gTTS](https://pypi.org/project/gTTS/)
-- [pygame](https://www.pygame.org/)
-- [MongoDB](https://www.mongodb.com/)
 
