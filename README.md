@@ -118,11 +118,6 @@ Sends an email with the specified subject and body to the specified email addres
 ### `getallusers()`
 Retrieves all registered users.
 
-## Configuration
-
-- **Database Configuration**: Adjust database paths as needed in the code.
-- **Voice Feedback**: Modify the `play_voice_message` function for different messages or languages.
-- **Email Configuration**: Update the `send_email` function with appropriate SMTP settings and login credentials.
 
 
 
