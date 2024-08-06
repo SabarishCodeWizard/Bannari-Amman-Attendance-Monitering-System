@@ -124,10 +124,6 @@ Retrieves all registered users.
 - **Voice Feedback**: Modify the `play_voice_message` function for different messages or languages.
 - **Email Configuration**: Update the `send_email` function with appropriate SMTP settings and login credentials.
 
-## Troubleshooting
-
-- **Model Not Found**: Ensure `face_recognition_model.pkl` exists in the `static` directory.
-- **No Faces Detected**: Check the quality of input images and lighting conditions.
 
 
 
