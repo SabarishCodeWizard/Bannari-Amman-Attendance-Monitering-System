@@ -112,8 +112,6 @@ Adds attendance for a recognized user.
 ### `play_voice_message(message)`
 Plays a voice message using gTTS and pygame.
 
-### `send_email(subject, body, to_email)`
-Sends an email with the specified subject and body to the specified email address.
 
 
 
