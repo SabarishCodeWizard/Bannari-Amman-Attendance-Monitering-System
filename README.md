@@ -112,10 +112,31 @@ Adds attendance for a recognized user.
 ### `play_voice_message(message)`
 Plays a voice message using gTTS and pygame.
 
+### `send_email(subject, body, to_email)`
+Sends an email with the specified subject and body to the specified email address.
 
+### `getallusers()`
+Retrieves all registered users.
 
+## Configuration
 
+- **Database Configuration**: Adjust database paths as needed in the code.
+- **Voice Feedback**: Modify the `play_voice_message` function for different messages or languages.
+- **Email Configuration**: Update the `send_email` function with appropriate SMTP settings and login credentials.
 
+## Troubleshooting
 
+- **Model Not Found**: Ensure `face_recognition_model.pkl` exists in the `static` directory.
+- **No Faces Detected**: Check the quality of input images and lighting conditions.
 
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+- [OpenCV](https://opencv.org/)
+- [Flask](https://flask.palletsprojects.com/)
+- [scikit-learn](https://scikit-learn.org/)
+- [gTTS](https://pypi.org/project/gTTS/)
+- [pygame](https://www.pygame.org/)
+- [MongoDB](https://www.mongodb.com/)
 
