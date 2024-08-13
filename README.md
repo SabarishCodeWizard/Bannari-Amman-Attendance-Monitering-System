@@ -1,6 +1,6 @@
 
 
-# Attendance Monitoring System with Facial Recognition
+# Attendance Monitoring System with Facial Recognitions
 
 ## Overview
 This project is an attendance monitoring system that uses facial recognition technology to mark and track attendance. It utilizes OpenCV for face detection, a machine learning model for face recognition, and Flask for the web interface.
