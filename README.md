@@ -11,6 +11,7 @@ This project is an attendance monitoring system that uses facial recognition tec
 
 
 
+Using Playwright to test the monitoring system. [Click here to view](https://drive.google.com/file/d/1FeuCB6oG-qTCqAL8rRTAuKcGV9ERmegn/view?usp=sharing).
 
 
 ## Features
