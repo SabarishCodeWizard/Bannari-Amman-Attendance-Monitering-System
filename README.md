@@ -9,6 +9,11 @@ This project is an attendance monitoring system that uses facial recognition tec
 
 [Watch the demo video](https://drive.google.com/file/d/1Gqt7hocnJyS9D3U5s7ufA17NXbxndkKI/view?usp=sharing)
 
+
+
+Using Playwright to test the monitoring system. [Click here to view](https://drive.google.com/file/d/1FeuCB6oG-qTCqAL8rRTAuKcGV9ERmegn/view?usp=sharing).
+
+
 ## Features
 - Real-time facial recognition
 - Voice feedback for successful attendance
