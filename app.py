@@ -235,6 +235,16 @@ def delete_user(username):
     train_model()
     return redirect(url_for('home'))
 
+@app.route('/set_session', methods=['POST'])
+def set_session():
+    data = request.get_json()
+    username = data.get('username')
+    if username:
+        session['logged_in'] = True
+        session['username'] = username
+        return {'status': 'success'}, 200
+    return {'status': 'failed'}, 400
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
