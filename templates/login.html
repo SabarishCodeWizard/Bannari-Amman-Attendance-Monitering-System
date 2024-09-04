@@ -52,6 +52,32 @@
         font-size: 18px;
         border-radius: 5px;
     }
+     /* Google Button Styling */
+     #google-login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #ffffff;
+            border: 1px solid #dddddd;
+            border-radius: 4px;
+            color: #757575;
+            font-size: 16px;
+            padding: 12px;
+            cursor: pointer;
+            transition: box-shadow 0.3s, background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        #google-login-btn img {
+            height: 20px;
+            margin-right: 8px;
+        }
+
+        #google-login-btn:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #f5f5f5;
+        }
+
 </style>
 
 <head>
@@ -88,7 +114,62 @@
             </div>
             <button type="submit" class="btn btn-dark">Login</button>
         </form>
+        <div class="container">
+            <div id="google-login-btn">
+                <img src="https://www.google.com/imgres?q=google%20image&imgurl=https%3A%2F%2Flookaside.fbsbx.com%2Flookaside%2Fcrawler%2Fmedia%2F%3Fmedia_id%3D100044408950171&imgrefurl=https%3A%2F%2Fwww.facebook.com%2FGoogleIndia%2F&docid=_Qj6mz-Y48rawM&tbnid=xRberq3Fn2MoHM&vet=12ahUKEwj4hb_pvaSIAxXr2TgGHeoJLwsQM3oECBkQAA..i&w=2048&h=2048&hcb=2&ved=2ahUKEwj4hb_pvaSIAxXr2TgGHeoJLwsQM3oECBkQAA" alt="Google Logo">
+                <span>Login with Google</span>
+            </div>
+            <div id="user-info"></div>
+        </div>
     </div>
+    
+    <script type="module">
+        // Firebase authentication setup script
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    
+        const firebaseConfig = {
+            apiKey: "AIzaSyBtl6lAdiZbJLFmus4tJCEgfG05MLKIkGs",
+            authDomain: "sabarish-2dd0f.firebaseapp.com",
+            projectId: "sabarish-2dd0f",
+            storageBucket: "sabarish-2dd0f.appspot.com",
+            messagingSenderId: "503704010379",
+            appId: "1:503704010379:web:e1db895ac83f6fae0d9e8e",
+            measurementId: "G-JN3C7GJ0T6"
+        };
+    
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+    
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+    
+        const googleLoginBtn = document.getElementById('google-login-btn');
+        const userInfo = document.getElementById('user-info');
+    
+        googleLoginBtn.addEventListener('click', () => {
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    const user = result.user;
+                    fetch('/set_session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ username: user.displayName })
+                    })
+                    .then(() => {
+                        window.location.href = "/";
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error during sign-in:', error);
+                    userInfo.innerHTML = `Error: ${error.message}`;
+                });
+        });
+
+    </script>
 
 </body>
 
