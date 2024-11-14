@@ -237,9 +237,6 @@ def update_student_details():
     if 'logged_in' not in session:
         return redirect(url_for('login'))
 
-    # Fetch all users from the database
-    users = users_collection.find()
-
     if request.method == 'POST':
         # Get updated student details from the form
         new_name = request.form['new_name']
@@ -258,7 +255,10 @@ def update_student_details():
 
         return redirect(url_for('update_student_details'))
 
+    # Fetch updated users after potential changes
+    users = users_collection.find()
     return render_template('update_student_details.html', users=users)
+
 
 
 @app.route('/attendance_log')
