@@ -1,6 +1,0 @@
-
-
-
-
-
-use email/password method instead of username and password hardcode

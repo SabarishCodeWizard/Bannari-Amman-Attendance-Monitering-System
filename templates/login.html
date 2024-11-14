@@ -69,6 +69,19 @@
         background-color: #c9370e;
     }
 
+    #forgot-password {
+        display: block;
+        margin-top: 15px;
+        color: #0066cc;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: underline;
+    }
+
+    #forgot-password:hover {
+        color: #0044aa;
+    }
+
     #google-login-btn {
         display: flex;
         align-items: center;
@@ -142,20 +155,22 @@
         {% endif %}
         {% endwith %}
 
-        <form action="" method="POST">
+        <form id="login-form">
             <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <button type="submit" class="btn">Login</button>
+            <button type="button" class="btn" id="email-login-btn">Login</button>
         </form>
 
+        <a id="forgot-password">Forgot Password?</a>
+
         <div id="google-login-btn">
-            <img src="https://www.google.com/imgres?q=google%20image&imgurl=https%3A%2F%2Flookaside.fbsbx.com%2Flookaside%2Fcrawler%2Fmedia%2F%3Fmedia_id%3D100044408950171&imgrefurl=https%3A%2F%2Fwww.facebook.com%2FGoogleIndia%2F&docid=_Qj6mz-Y48rawM&tbnid=xRberq3Fn2MoHM&vet=12ahUKEwj4hb_pvaSIAxXr2TgGHeoJLwsQM3oECBkQAA..i&w=2048&h=2048&hcb=2&ved=2ahUKEwj4hb_pvaSIAxXr2TgGHeoJLwsQM3oECBkQAA"
+            <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"
                 alt="Google Logo">
             <span>Login with Google</span>
         </div>
@@ -167,13 +182,13 @@
         // Firebase authentication setup script
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-analytics.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBOdKI7-hV3BvPvJEPQRuJot-qx9SSSjE0",
             authDomain: "attendance-df720.firebaseapp.com",
             projectId: "attendance-df720",
-            storageBucket: "attendance-df720.firebasestorage.app",
+            storageBucket: "attendance-df720.appspot.com",
             messagingSenderId: "468265145415",
             appId: "1:468265145415:web:66c44f94216104b0e0cd62",
             measurementId: "G-7T9JGB4FGQ"
@@ -186,6 +201,8 @@
         const provider = new GoogleAuthProvider();
 
         const googleLoginBtn = document.getElementById('google-login-btn');
+        const emailLoginBtn = document.getElementById('email-login-btn');
+        const forgotPasswordLink = document.getElementById('forgot-password');
         const userInfo = document.getElementById('user-info');
 
         googleLoginBtn.addEventListener('click', () => {
@@ -205,6 +222,46 @@
                 })
                 .catch((error) => {
                     console.error('Error during sign-in:', error);
+                    userInfo.innerHTML = `Error: ${error.message}`;
+                });
+        });
+
+        emailLoginBtn.addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    fetch('/set_session', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ username: user.email })
+                    })
+                        .then(() => {
+                            window.location.href = "/";
+                        });
+                })
+                .catch((error) => {
+                    console.error('Error during email sign-in:', error);
+                    userInfo.innerHTML = `Error: ${error.message}`;
+                });
+        });
+
+        forgotPasswordLink.addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            if (!email) {
+                alert('Please enter your email address to reset your password.');
+                return;
+            }
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
+                    alert('Password reset email sent! Check your inbox.');
+                })
+                .catch((error) => {
+                    console.error('Error during password reset:', error);
                     userInfo.innerHTML = `Error: ${error.message}`;
                 });
         });
