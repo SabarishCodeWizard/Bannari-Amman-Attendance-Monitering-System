@@ -208,22 +208,50 @@ def edit_user(username):
     if 'logged_in' not in session:
         return redirect(url_for('login'))
     
-    if request.method == 'POST':
-        new_username = request.form['new_username']
-        new_userid = request.form['new_userid']
-        
-        users_collection.update_one({'name': username}, {'$set': {'name': new_username, 'id': int(new_userid)}})
-        
-        logging.info('Updating User and Training Model')
-        train_model()
-        
-        return redirect(url_for('home'))
-    
-    user = users_collection.find_one({'name': username.split('_')[0], 'id': int(username.split('_')[1])})
+    # Splitting the username into name and id components to locate the user
+    name_part, id_part = username.split('_')
+    user = users_collection.find_one({'name': name_part, 'id': int(id_part)})
+
     if not user:
         return 'User not found!', 404
+
+    if request.method == 'POST':
+        new_username = request.form['newname']  # Updated to match HTML form field
+        new_userid = request.form['newroll']   # Updated to match HTML form field
+
+        # Update the user document with the new name and ID
+        users_collection.update_one(
+            {'name': name_part, 'id': int(id_part)}, 
+            {'$set': {'name': new_username, 'id': int(new_userid)}}
+        )
+
+        logging.info('User information updated and model retrained')
+        train_model()  # Retrain model after updating user data
+
+        return redirect(url_for('home'))
     
     return render_template('edit_user.html', user=user)
+
+@app.route('/attendance_log')
+def attendance_log():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+    
+    # Fetch all attendance records from the database
+    attendance_records = attendance_collection.find().sort("date", -1)
+    
+    # Structure data for easy display
+    attendance_data = []
+    for record in attendance_records:
+        attendance_data.append({
+            "name": record['name'],
+            "roll": record['roll'],
+            "time": record['time'],
+            "date": record['date']
+        })
+    
+    return render_template('attendance_log.html', attendance_data=attendance_data)
+
 
 @app.route('/delete_user/<username>', methods=['POST'])
 def delete_user(username):
