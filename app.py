@@ -293,14 +293,20 @@ def attendance_log():
     # Structure data for easy display
     attendance_data = []
     for record in attendance_records:
+        # Find the student in the users collection based on their roll number
+        user = users_collection.find_one({'id': record['roll']})
+        face_image = user['faces'][0] if user and 'faces' in user else None  # Use the first face as a thumbnail
+
         attendance_data.append({
             "name": record['name'],
             "roll": record['roll'],
             "time": record['time'],
-            "date": record['date']
+            "date": record['date'],
+            "face_image": face_image  # Add face image in base64 format
         })
     
     return render_template('attendance_log.html', attendance_data=attendance_data)
+
 
 
 @app.route('/download_attendance_csv')

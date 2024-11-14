@@ -98,16 +98,26 @@
             <thead>
                 <tr>
                     <th>S No</th>
+                    <th>Student Face</th> 
                     <th>Name</th>
                     <th>ID</th>
                     <th>Date</th>
                     <th>Time</th>
+                    
                 </tr>
             </thead>
             <tbody>
                 {% for record in attendance_data %}
                 <tr>
                     <td>{{ loop.index }}</td>
+                    <td>
+                        <!-- Display the student face image -->
+                        {% if record.face_image %}
+                            <img src="data:image/jpeg;base64,{{ record.face_image }}" alt="Student Face" width="50" height="50">
+                        {% else %}
+                            No Image
+                        {% endif %}
+                    </td>
                     <td>{{ record.name }}</td>
                     <td>{{ record.roll }}</td>
                     <td>{{ record.date }}</td>
