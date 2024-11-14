@@ -259,6 +259,24 @@ def update_student_details():
     users = users_collection.find()
     return render_template('update_student_details.html', users=users)
 
+@app.route('/delete_student/<user_id>', methods=['POST'])
+def delete_student(user_id):
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+    
+    # Convert the user_id from string to integer
+    user_id = int(user_id)
+
+    # Delete user from the 'users' collection
+    users_collection.delete_one({'id': user_id})
+
+    # Delete attendance records for the user
+    attendance_collection.delete_many({'roll': user_id})
+
+    logging.info(f"Deleted student with ID {user_id} and their attendance records.")
+    
+    return redirect(url_for('update_student_details'))
+
 
 
 @app.route('/attendance_log')
