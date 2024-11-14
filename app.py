@@ -258,9 +258,20 @@ def update_student_details():
 
         return redirect(url_for('update_student_details'))
 
-    # Fetch updated users after potential changes
+    # Fetch updated users including face image
     users = users_collection.find()
+    # Convert the users cursor to a list and ensure each document has the face image in base64 format if available
+    users = [
+        {
+            'name': user['name'],
+            'id': user['id'],
+            'face_image': user['faces'][0] if 'faces' in user else None  # Assuming the face image is in `faces` array
+        }
+        for user in users
+    ]
+
     return render_template('update_student_details.html', users=users)
+
 
 @app.route('/delete_student/<user_id>', methods=['POST'])
 def delete_student(user_id):
