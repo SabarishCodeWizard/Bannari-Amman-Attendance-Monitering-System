@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for, flash, session
+from flask import Flask, request, render_template, redirect, url_for, flash, session , Response
 import os
 import cv2
 import numpy as np
@@ -14,6 +14,9 @@ from cryptography.fernet import Fernet
 import logging
 from pymongo import MongoClient
 import base64
+import csv
+from io import StringIO
+
 
 #### Defining Flask App
 app = Flask(__name__)
@@ -298,6 +301,33 @@ def attendance_log():
         })
     
     return render_template('attendance_log.html', attendance_data=attendance_data)
+
+
+@app.route('/download_attendance_csv')
+def download_attendance_csv():
+    # Fetch attendance records from the database
+    attendance_records = attendance_collection.find().sort("date", -1)
+    
+    # Create an in-memory file-like object
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Write the header row
+    writer.writerow(['S No', 'Name', 'ID', 'Date', 'Time'])
+    
+    # Write the data rows
+    for index, record in enumerate(attendance_records, start=1):
+        writer.writerow([index, record['name'], record['roll'], record['date'], record['time']])
+    
+    # Move the cursor to the beginning of the file
+    output.seek(0)
+    
+    # Create a Response to send the CSV file as download
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=attendance_log.csv"}
+    )
 
 
 @app.route('/delete_user/<username>', methods=['POST'])
