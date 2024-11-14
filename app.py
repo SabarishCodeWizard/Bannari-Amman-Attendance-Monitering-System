@@ -232,26 +232,6 @@ def edit_user(username):
     
     return render_template('edit_user.html', user=user)
 
-@app.route('/attendance_log')
-def attendance_log():
-    if 'logged_in' not in session:
-        return redirect(url_for('login'))
-    
-    # Fetch all attendance records from the database
-    attendance_records = attendance_collection.find().sort("date", -1)
-    
-    # Structure data for easy display
-    attendance_data = []
-    for record in attendance_records:
-        attendance_data.append({
-            "name": record['name'],
-            "roll": record['roll'],
-            "time": record['time'],
-            "date": record['date']
-        })
-    
-    return render_template('attendance_log.html', attendance_data=attendance_data)
-
 @app.route('/update_student_details', methods=['GET', 'POST'])
 def update_student_details():
     if 'logged_in' not in session:
@@ -279,6 +259,27 @@ def update_student_details():
         return redirect(url_for('update_student_details'))
 
     return render_template('update_student_details.html', users=users)
+
+
+@app.route('/attendance_log')
+def attendance_log():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+    
+    # Fetch all attendance records from the database
+    attendance_records = attendance_collection.find().sort("date", -1)
+    
+    # Structure data for easy display
+    attendance_data = []
+    for record in attendance_records:
+        attendance_data.append({
+            "name": record['name'],
+            "roll": record['roll'],
+            "time": record['time'],
+            "date": record['date']
+        })
+    
+    return render_template('attendance_log.html', attendance_data=attendance_data)
 
 
 @app.route('/delete_user/<username>', methods=['POST'])
