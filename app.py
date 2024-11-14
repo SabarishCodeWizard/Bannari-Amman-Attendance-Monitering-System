@@ -230,10 +230,17 @@ def delete_user(username):
     if 'logged_in' not in session:
         return redirect(url_for('login'))
     
-    users_collection.delete_one({'name': username.split('_')[0], 'id': int(username.split('_')[1])})
-    logging.info('Deleting User and Training Model')
-    train_model()
+    # Extract name and ID from the username parameter
+    name, user_id = username.split('_')
+    user_id = int(user_id)
+
+    # Delete attendance records for this user
+    attendance_collection.delete_many({'roll': user_id})
+
+    logging.info(f"Deleted attendance records for user {name} with ID {user_id}")
+    
     return redirect(url_for('home'))
+
 
 @app.route('/set_session', methods=['POST'])
 def set_session():
