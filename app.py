@@ -252,6 +252,34 @@ def attendance_log():
     
     return render_template('attendance_log.html', attendance_data=attendance_data)
 
+@app.route('/update_student_details', methods=['GET', 'POST'])
+def update_student_details():
+    if 'logged_in' not in session:
+        return redirect(url_for('login'))
+
+    # Fetch all users from the database
+    users = users_collection.find()
+
+    if request.method == 'POST':
+        # Get updated student details from the form
+        new_name = request.form['new_name']
+        new_roll = request.form['new_roll']
+        user_id = request.form['user_id']
+
+        # Update the user document in the database
+        users_collection.update_one(
+            {'id': int(user_id)},
+            {'$set': {'name': new_name, 'id': int(new_roll)}}
+        )
+
+        # Retrain the model after updating details
+        logging.info('Student details updated and model retrained')
+        train_model()
+
+        return redirect(url_for('update_student_details'))
+
+    return render_template('update_student_details.html', users=users)
+
 
 @app.route('/delete_user/<username>', methods=['POST'])
 def delete_user(username):

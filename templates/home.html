@@ -15,7 +15,7 @@
         margin-top: 40px;
         height: 100vh;
         padding: 0;
-        margin: 0;   
+        margin: 0;
     }
 
     table {
@@ -59,7 +59,8 @@
 <body>
 
     <div class='mt-3 text-center'>
-        <h1 style="width: auto;margin: auto;color: white;padding: 11px;font-size: 44px;">Bannari Amman Institute Of Technology Attendance Portal
+        <h1 style="width: auto;margin: auto;color: white;padding: 11px;font-size: 44px;">Bannari Amman Institute Of
+            Technology Attendance Portal
         </h1>
     </div>
 
@@ -96,8 +97,10 @@
                     <td>{{ rolls[i] }}</td>
                     <td>{{ times[i] }}</td>
                     <td>
-                        <a href="{{ url_for('edit_user', username=names[i] + '_' + rolls[i]|string) }}" class="btn btn-warning">Edit</a>
-                        <form action="{{ url_for('delete_user', username=names[i] + '_' + rolls[i]|string) }}" method="POST" style="display:inline;">
+                        <a href="{{ url_for('edit_user', username=names[i] + '_' + rolls[i]|string) }}"
+                            class="btn btn-warning">Edit</a>
+                        <form action="{{ url_for('delete_user', username=names[i] + '_' + rolls[i]|string) }}"
+                            method="POST" style="display:inline;">
                             <button type="submit" class="btn btn-danger">Delete</button>
                         </form>
                     </td>
@@ -136,8 +139,11 @@
     <div class="text-center mt-3">
         <a href="{{ url_for('attendance_log') }}" class="btn btn-info">View Attendance Log</a>
     </div>
-    
+    <!-- Replace the student details table section with a link to the new page -->
+    <a href="{{ url_for('update_student_details') }}" class="btn btn-info">Update Student Details</a>
+
 
 </body>
 
-</html></form>
+</html>
+</form>

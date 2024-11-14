@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+    <title>Student Details Update</title>
+</head>
+<body>
+
+<div class='mt-3 text-center'>
+    <h1 style="color: white; padding: 11px; font-size: 44px;">Update Student Details</h1>
+</div>
+
+<div class="container">
+    <h2 class="mt-4">Student Information</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>S No</th>
+                <th>Name</th>
+                <th>Roll Number</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ user['name'] }}</td>
+                    <td>{{ user['id'] }}</td>
+                    <td>
+                        <!-- Form to edit student details -->
+                        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ user['id'] }}">
+                            Edit
+                        </button>
+                    </td>
+                </tr>
+
+                <!-- Modal for editing student details -->
+                <div class="modal fade" id="editModal{{ user['id'] }}" tabindex="-1" aria-labelledby="editModalLabel{{ user['id'] }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editModalLabel{{ user['id'] }}">Edit Student Details</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <form action="/update_student_details" method="POST">
+                                    <input type="hidden" name="user_id" value="{{ user['id'] }}">
+                                    <div class="mb-3">
+                                        <label for="new_name" class="form-label">New Name</label>
+                                        <input type="text" class="form-control" id="new_name" name="new_name" value="{{ user['name'] }}" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="new_roll" class="form-label">New Roll Number</label>
+                                        <input type="number" class="form-control" id="new_roll" name="new_roll" value="{{ user['id'] }}" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Update</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.min.js"></script>
+</body>
+</html>
