@@ -308,43 +308,44 @@ def attendance_log():
         user = users_collection.find_one({'id': record['roll']})
         face_image = user['faces'][0] if user and 'faces' in user else None  # Use the first face as a thumbnail
 
+        # Determine attendance status (assuming "Present" here; adjust as needed)
+        status = "Present" if record else "Absent"
+
         attendance_data.append({
             "name": record['name'],
             "roll": record['roll'],
             "time": record['time'],
             "date": record['date'],
-            "face_image": face_image  # Add face image in base64 format
+            "face_image": face_image,
+            "status": status  # Add the attendance status
         })
     
     return render_template('attendance_log.html', attendance_data=attendance_data)
 
 
 
+
 @app.route('/download_attendance_csv')
 def download_attendance_csv():
-    # Fetch attendance records from the database
     attendance_records = attendance_collection.find().sort("date", -1)
     
-    # Create an in-memory file-like object
     output = StringIO()
     writer = csv.writer(output)
     
-    # Write the header row
-    writer.writerow(['S No', 'Name', 'ID', 'Date', 'Time'])
+    writer.writerow(['S No', 'Name', 'ID', 'Date', 'Time', 'Status'])  # Add "Status" header
     
-    # Write the data rows
     for index, record in enumerate(attendance_records, start=1):
-        writer.writerow([index, record['name'], record['roll'], record['date'], record['time']])
+        status = "Present" if record else "Absent"
+        writer.writerow([index, record['name'], record['roll'], record['date'], record['time'], status])  # Add "status"
     
-    # Move the cursor to the beginning of the file
     output.seek(0)
     
-    # Create a Response to send the CSV file as download
     return Response(
         output.getvalue(),
         mimetype="text/csv",
         headers={"Content-Disposition": "attachment;filename=attendance_log.csv"}
     )
+
 
 
 @app.route('/delete_user/<username>', methods=['POST'])

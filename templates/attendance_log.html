@@ -81,6 +81,15 @@
             background-color: #0dcaf0;
             color: black;
         }
+
+        .status-present {
+            color: green;
+            font-size: 20px;
+        }
+
+        .status-absent {
+            color: red;
+        }
     </style>
 </head>
 
@@ -100,6 +109,7 @@
                     <th>ID</th>
                     <th>Date</th>
                     <th>Time</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -120,6 +130,13 @@
                     <td>{{ record.roll }}</td>
                     <td>{{ record.date }}</td>
                     <td>{{ record.time }}</td>
+                    <td>
+                        <span class="{% if record.status == 'Present' %}status-present{% else %}status-absent{% endif %}">
+                            {{ record.status }}
+                        </span>
+                    </td>
+                    
+
                 </tr>
                 {% endfor %}
             </tbody>
