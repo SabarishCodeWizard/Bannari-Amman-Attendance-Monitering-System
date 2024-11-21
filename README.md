@@ -5,7 +5,6 @@
 ## Overview
 This project is an attendance monitoring system that uses facial recognition technology to mark and track attendance. It utilizes OpenCV for face detection, a machine learning model for face recognition, and Flask for the web interface.
 
-## Demo
 
 [Watch the demo video](https://drive.google.com/file/d/1Gqt7hocnJyS9D3U5s7ufA17NXbxndkKI/view?usp=sharing)
 
